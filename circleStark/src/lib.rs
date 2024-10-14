@@ -1,6 +1,10 @@
 use std::ops::Deref;
 
+mod utils;
 use lambdaworks_math::field::fields::mersenne31;
+use utils::*;
+mod circle;
+use circle::*;
 
 //list of evals to list of coeffs
 // here they are in a weird order
