@@ -3,6 +3,7 @@ use std::ops::Add;
 use lambdaworks_math::elliptic_curve::edwards::curves::bandersnatch::field;
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
+use lambdaworks_math::field::traits::IsField;
 
 #[derive(Clone)]
 pub struct CirclePoint {
@@ -19,10 +20,12 @@ impl Add for CirclePoint {
     }
 }
 pub trait CircleImpl {
-    fn new(x: u32, Y: u32) -> CirclePoint;
+    fn new(x: u32, y: u32) -> CirclePoint;
     fn zero() -> CirclePoint;
     fn double(&self) -> CirclePoint;
     fn zeroes(shape: usize) -> Vec<CirclePoint>;
+    fn inverse_x(&self) -> FieldElement<M31>;
+    fn inverse_y(&self) -> FieldElement<M31>;
 }
 
 impl CircleImpl for CirclePoint {
@@ -45,6 +48,7 @@ impl CircleImpl for CirclePoint {
             y: (self.y * self.x).double(),
         };
     }
+    
     fn zeroes(shape: usize) -> Vec<CirclePoint> {
         vec![
             CirclePoint {
@@ -53,6 +57,14 @@ impl CircleImpl for CirclePoint {
             };
             shape
         ]
+    }
+
+    fn inverse_x(&self) -> FieldElement<M31> {
+        return FieldElement::inv(&self.x).unwrap();
+    }
+
+    fn inverse_y(&self) -> FieldElement<M31> {
+        return FieldElement::inv(&self.y).unwrap();
     }
 }
 
@@ -68,4 +80,11 @@ pub fn Z() -> CirclePoint {
         x: FieldElement::new(1),
         y: FieldElement::new(0),
     }
+}
+
+pub fn inverse<F>(x: FieldElement<F>) -> FieldElement<F>
+where
+    F: IsField,
+{
+    return FieldElement::inv(&x).unwrap();
 }

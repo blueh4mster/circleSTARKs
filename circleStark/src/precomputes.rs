@@ -1,5 +1,6 @@
-use crate::{circle::CirclePoint, CircleImpl, G, Z};
-use lambdaworks_math::field::fields::mersenne31;
+use crate::{circle::CirclePoint, inverse, CircleImpl, G, Z};
+use lambdaworks_math::field::element::FieldElement;
+use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
 const TOP_DOMAIN_SIZE: u32 = 1 << 24; // 2**24
 
@@ -55,7 +56,10 @@ pub fn get_subdomains() -> Vec<CirclePoint> {
         let source_end = 1 << (i + 3) * 3;
 
         // Get the source slice and double it
-        let doubled = &sub_domains[source_start..source_end].iter().map(|x| x.double()).collect();
+        let doubled = &sub_domains[source_start..source_end]
+            .iter()
+            .map(|x| x.double())
+            .collect();
 
         // Copy the doubled points to their destination
         sub_domains[start_idx..end_idx].clone_from_slice(&doubled);
@@ -64,7 +68,13 @@ pub fn get_subdomains() -> Vec<CirclePoint> {
     sub_domains
 }
 
+pub fn inverse_x(sub_domains: Vec<CirclePoint>) -> Vec<FieldElement<M31>> {
+    sub_domains.iter().map(|c| c.inverse_x()).collect()
+}
 
+pub fn inverse_y(sub_domains: Vec<CirclePoint>) -> Vec<FieldElement<M31>> {
+    sub_domains.iter().map(|c| c.inverse_y()).collect()
+}
 // invx = 1 / sub_domains.x
 // invy = 1 / sub_domains.y
 
