@@ -1,18 +1,24 @@
-// from utils import (
-//     reverse_bit_order, folded_reverse_bit_order, log2, cp
-// )
-// from zorch.m31 import (
-//     M31, ExtendedM31, Point, modulus, zeros_like, Z, G
-// )
+use crate::{circle::CirclePoint, CircleImpl};
 use lambdaworks_math::field::fields::mersenne31;
 
-const  TOP_DOMAIN_SIZE = 2**24;
+const TOP_DOMAIN_SIZE: u32 = 1 << 24; // 2**24
 
+const modulus: u32 = 1; // will be changed
 
-// # Generator point
-// for i in range(log2(TOP_DOMAIN_SIZE), log2(modulus+1)-1):
-//     G = G.double()
+//  Generator point
+pub fn generator_point(G: CirclePoint) -> CirclePoint {
+    let mut ans: CirclePoint = G;
+    for _ in (TOP_DOMAIN_SIZE as u32).ilog2()..(modulus + 1).ilog2() - 1 {
+        ans = ans.double();
+    }
+    ans
+}
 
+// Get the subdomains
+
+pub fn get_subdomains(){
+    let top_domain=
+}
 // def get_subdomains():
 //     # Compute the points in the largest-size domain
 //     top_domain = Point.zeros(2)

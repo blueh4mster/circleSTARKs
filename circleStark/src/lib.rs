@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-mod utils;
+mod precomputes;
 use lambdaworks_math::field::fields::mersenne31;
-use utils::*;
+use precomputes::*;
 mod circle;
 use circle::*;
 

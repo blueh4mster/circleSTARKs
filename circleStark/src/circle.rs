@@ -1,12 +1,15 @@
 use lambdaworks_math::elliptic_curve::edwards::curves::bandersnatch::field;
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
-struct CirclePoint {
+
+#[derive(Clone)]
+pub struct CirclePoint {
     x: FieldElement<M31>,
     y: FieldElement<M31>,
 }
-trait CircleImpl {
+pub trait CircleImpl {
     fn double(&self) -> CirclePoint;
+    fn zeroes(&self, shape: usize) -> Vec<CirclePoint>;
 }
 
 impl CircleImpl for CirclePoint {
@@ -17,18 +20,27 @@ impl CircleImpl for CirclePoint {
             y: (self.y * self.x).double(),
         };
     }
+    fn zeroes(&self, shape: usize) -> Vec<CirclePoint> {
+        vec![
+            CirclePoint {
+                x: FieldElement::new(0),
+                y: FieldElement::new(0)
+            };
+            shape
+        ]
+    }
 }
 
 pub fn G() -> CirclePoint {
     CirclePoint {
-        x: 1268011823.into(),
-        y: 2.into(),
+        x: FieldElement::new(1268011823),
+        y: FieldElement::new(2),
     }
 }
 
 pub fn Z() -> CirclePoint {
     CirclePoint {
-        x: 1.into(),
-        y: 0.into(),
+        x: FieldElement::new(1),
+        y: FieldElement::new(0),
     }
 }
