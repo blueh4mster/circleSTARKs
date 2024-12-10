@@ -48,7 +48,7 @@ impl CircleImpl for CirclePoint {
             y: (self.y * self.x).double(),
         };
     }
-    
+
     fn zeroes(shape: usize) -> Vec<CirclePoint> {
         vec![
             CirclePoint {

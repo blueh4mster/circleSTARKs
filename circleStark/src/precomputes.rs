@@ -1,20 +1,17 @@
-use crate::{circle::CirclePoint, inverse, CircleImpl, G, Z};
+use crate::circle::{CircleImpl, CirclePoint, G};
+use crate::utils::log2;
+use crate::utils::{folded_reverse_bit_order, reverse_bit_order};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
-use crate::utils::{folded_reverse_bit_order, reverse_bit_order};
-
 const TOP_DOMAIN_SIZE: usize = 1 << 24; // 2**24
 const LOG2_TOP_DOMAIN_SIZE: usize = 24;
-const modulus: u32 = 1; // will be changed
+const MODULUS: u32 = 1; // will be changed
 
-pub fn log2(x: u32) -> usize {
-    (x as f64).log2() as usize
-}
 //  Generator point
 pub fn generator_point(G: CirclePoint) -> CirclePoint {
     let mut ans: CirclePoint = G;
-    for _ in LOG2_TOP_DOMAIN_SIZE..log2(modulus + 1) - 1 {
+    for _ in LOG2_TOP_DOMAIN_SIZE..log2(MODULUS + 1) - 1 {
         ans = ans.double();
     }
     ans
@@ -94,7 +91,7 @@ pub fn compute_bit_orders() -> (Vec<u32>, Vec<u32>) {
     }
 
     // Compute Folded RBO
-    for i in 0..LOG_TOP_DOMAIN_SIZE {
+    for i in 0..LOG2_TOP_DOMAIN_SIZE {
         let start = 1 << i;
         let end = 1 << (i + 1);
 
@@ -104,10 +101,3 @@ pub fn compute_bit_orders() -> (Vec<u32>, Vec<u32>) {
 
     (rbos, folded_rbos)
 }
-// rbos = cp.zeros(TOP_DOMAIN_SIZE * 2, dtype=cp.uint32)
-// for i in range(log2(TOP_DOMAIN_SIZE)):
-//     rbos[2**i:2**(i+1)] = reverse_bit_order(cp.arange(2**i))
-
-// folded_rbos = cp.zeros(TOP_DOMAIN_SIZE * 2, dtype=cp.uint32)
-// for i in range(log2(TOP_DOMAIN_SIZE)):
-//     folded_rbos[2**i:2**(i+1)] = folded_reverse_bit_order(cp.arange(2**i))

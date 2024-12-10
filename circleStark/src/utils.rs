@@ -1,5 +1,8 @@
 use ndarray::{s, Array, Axis, Dimension};
 
+pub fn log2(x: u32) -> usize {
+    (x as f64).log2() as usize
+}
 pub fn reverse_bit_order<D>(vals: &Array<u32, D>) -> Array<u32, D>
 where
     D: Dimension,
