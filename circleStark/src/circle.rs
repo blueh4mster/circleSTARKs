@@ -1,11 +1,12 @@
+use lambdaworks_math::field::element::FieldElement;
+use lambdaworks_math::field::fields::mersenne31::field::{
+    Mersenne31Field as M31, MERSENNE_31_PRIME_FIELD_ORDER,
+};
+use lambdaworks_math::field::traits::IsField;
 use std::ops::Add;
 
-use lambdaworks_math::elliptic_curve::edwards::curves::bandersnatch::field;
-use lambdaworks_math::field::element::FieldElement;
-use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
-use lambdaworks_math::field::traits::IsField;
-
-#[derive(Clone)]
+pub const MODULUS: u32 = MERSENNE_31_PRIME_FIELD_ORDER;
+#[derive(Clone, PartialEq, Copy)]
 pub struct CirclePoint {
     x: FieldElement<M31>,
     y: FieldElement<M31>,
@@ -13,6 +14,7 @@ pub struct CirclePoint {
 
 impl Add for CirclePoint {
     type Output = CirclePoint;
+    //(x1,y1)+ (x2,y2) ---> ( x1*x2-y1*y2 , x1*y2+y1*x2 )
     fn add(self, rhs: Self) -> Self::Output {
         let x = self.x.clone() * rhs.x.clone() - self.y.clone() * rhs.y.clone();
         let y = self.x * rhs.y + self.y * rhs.x;
@@ -20,7 +22,10 @@ impl Add for CirclePoint {
     }
 }
 pub trait CircleImpl {
+    fn new_with_field_elements(x: FieldElement<M31>, y: FieldElement<M31>) -> CirclePoint;
     fn new(x: u32, y: u32) -> CirclePoint;
+    fn get_x(&self) -> FieldElement<M31>;
+    fn get_y(&self) -> FieldElement<M31>;
     fn zero() -> CirclePoint;
     fn double(&self) -> CirclePoint;
     fn zeroes(shape: usize) -> Vec<CirclePoint>;
@@ -35,6 +40,19 @@ impl CircleImpl for CirclePoint {
             y: FieldElement::new(y),
         };
     }
+
+    fn new_with_field_elements(x: FieldElement<M31>, y: FieldElement<M31>) -> CirclePoint {
+        return CirclePoint { x, y };
+    }
+
+    fn get_x(&self) -> FieldElement<M31> {
+        return self.x;
+    }
+
+    fn get_y(&self) -> FieldElement<M31> {
+        return self.y;
+    }
+
     fn zero() -> Self {
         CirclePoint {
             x: FieldElement::new(0),
@@ -87,4 +105,39 @@ where
     F: IsField,
 {
     return FieldElement::inv(&x).unwrap();
+}
+
+pub fn scalar_multiply(c: CirclePoint, n: u32) -> CirclePoint {
+    match n {
+        0 => CirclePoint::new(1, 0), // confirm if (0,0)
+        1 => c,
+        _ => {
+            let half_result = scalar_multiply(c.clone(), n / 2);
+            let doubled = half_result.double();
+            if n % 2 == 0 {
+                doubled
+            } else {
+                doubled.add(c)
+            }
+        }
+    }
+}
+
+/// n==0 not handled
+pub fn scalar_division(c: CirclePoint, n: u32) -> CirclePoint {
+    let field_inverse_n: FieldElement<M31> = (FieldElement::new(n)).inv().unwrap();
+    return scalar_multiply(c, field_inverse_n.to_raw());
+}
+
+// naive implementation for Div , Mul standard operations, rather  implement like `Add` as above
+pub fn div(c1: CirclePoint, c2: CirclePoint) -> CirclePoint {
+    let new_x = (c1.get_x().inv().unwrap().to_raw()).wrapping_mul(c2.get_x().to_raw());
+    let new_y = (c1.get_y().inv().unwrap().to_raw()).wrapping_mul(c2.get_y().to_raw());
+    return CirclePoint::new(new_x, new_y);
+}
+
+pub fn subtract(c1: CirclePoint, c2: CirclePoint) -> CirclePoint {
+    let new_x = c1.get_x().to_raw() - c2.get_x().to_raw() + MODULUS;
+    let new_y = c1.get_y().to_raw() - c2.get_y().to_raw() + MODULUS;
+    return <CirclePoint as CircleImpl>::new(new_x, new_y);
 }
