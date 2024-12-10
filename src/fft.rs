@@ -1,6 +1,8 @@
 use std::ops::Add;
 
-use crate::circle::{scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
+use crate::circle::{
+    div, multiply, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS,
+};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
@@ -51,17 +53,14 @@ fn get_single_domain_value(field_modulus: u32, size: usize, index: usize) -> Cir
     scalar_multiply(g, (2 * index + 1) as u32)
 }
 
-fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<FieldElement<M31>> {
+// for circle points onlys
+fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<CirclePoint> {
     let new_length = if preserve_length {
         domain.len()
     } else {
         domain.len() / 2
     };
-    domain
-        .iter()
-        .take(new_length)
-        .map(|c| c.get_x().clone())
-        .collect()
+    domain.iter().take(new_length).map(|c| c.double()).collect()
 }
 
 fn halve_single_domain_value(value: &CirclePoint) -> FieldElement<M31> {
@@ -79,10 +78,7 @@ fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint>
     };
     let half_domain = halve_domain(&domain, false); //get the half length
 
-    let (f0, f1) = if let (x, y) = (
-        domain.get(0).unwrap().get_x(),
-        domain.get(0).unwrap().get_y(),
-    ) {
+    let (f0, f1) = if let Some(_cir) = domain.get(0) {
         let (left, right) = vals.split_at(vals.len() / 2);
         let right_reversed: Vec<CirclePoint> = right.iter().rev().cloned().collect();
         let f0: Vec<_> = left
@@ -94,7 +90,7 @@ fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint>
             .iter()
             .zip(&right_reversed)
             .zip(domain.iter())
-            .map(|((&l, &r), d)| scalar_division(subtract(l, r), scalar_multiply(*d, 2)))
+            .map(|((&l, &r), d)| div(subtract(l, r), scalar_multiply(*d, 2)))
             .collect();
         (f0, f1)
     } else {
@@ -103,13 +99,13 @@ fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint>
         let f0: Vec<_> = left
             .iter()
             .zip(&right_reversed)
-            .map(|(&l, &r)| (l + r) / CirclePoint::from(2.0))
+            .map(|(&l, &r)| scalar_division(l.add(r), 2))
             .collect();
         let f1: Vec<_> = left
             .iter()
             .zip(&right_reversed)
             .zip(domain.iter())
-            .map(|((&l, &r), &x)| (l - r) / CirclePoint::from(2.0 * x))
+            .map(|((&l, &r), &x)| div(subtract(l, r), scalar_multiply(x, 2)))
             .collect();
         (f0, f1)
     };
@@ -140,24 +136,24 @@ fn inv_fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePo
 
     let f0 = inv_fft(
         &vals.iter().step_by(2).cloned().collect::<Vec<_>>(),
-        &half_domain,
+        Some(&half_domain),
     );
     let f1 = inv_fft(
         &vals.iter().skip(1).step_by(2).cloned().collect::<Vec<_>>(),
-        &half_domain,
+        Some(&half_domain),
     );
 
-    let (left, right): (Vec<_>, Vec<_>) = if let Some((x, y)) = domain.get(0) {
+    let (left, right): (Vec<CirclePoint>, Vec<CirclePoint>) = if let Some(_cir) = domain.get(0) {
         f0.iter()
             .zip(&f1)
             .zip(domain.iter())
-            .map(|((&l, &r), &(_, y))| ((l + y * r), (l - y * r)))
+            .map(|((&l, &r), &y)| (l.add(multiply(y, r)), subtract(l, multiply(y, r))))
             .unzip()
     } else {
         f0.iter()
             .zip(&f1)
             .zip(domain.iter())
-            .map(|((&l, &r), &x)| ((l + x * r), (l - x * r)))
+            .map(|((&l, &r), &x)| (l.add(multiply(x, r)), subtract(l, multiply(x, r))))
             .unzip()
     };
 
