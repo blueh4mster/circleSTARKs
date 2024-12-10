@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 lambdaworks-math = "0.10.0"
+ndarray = "0.16.1"
