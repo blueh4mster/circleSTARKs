@@ -2,8 +2,8 @@ use crate::{circle::CirclePoint, inverse, CircleImpl, G, Z};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
-const TOP_DOMAIN_SIZE: u32 = 1 << 24; // 2**24
-
+const TOP_DOMAIN_SIZE: usize = 1 << 24; // 2**24
+const LOG@_TOP_DOMAIN_SIZE:usize=24;
 const modulus: u32 = 1; // will be changed
 
 pub fn log2(x: u32) -> usize {
@@ -60,6 +60,7 @@ pub fn get_subdomains() -> Vec<CirclePoint> {
             .iter()
             .map(|x| x.double())
             .collect();
+        // .collect::Vec<_>();
 
         // Copy the doubled points to their destination
         sub_domains[start_idx..end_idx].clone_from_slice(&doubled);
@@ -75,9 +76,35 @@ pub fn inverse_x(sub_domains: Vec<CirclePoint>) -> Vec<FieldElement<M31>> {
 pub fn inverse_y(sub_domains: Vec<CirclePoint>) -> Vec<FieldElement<M31>> {
     sub_domains.iter().map(|c| c.inverse_y()).collect()
 }
-// invx = 1 / sub_domains.x
-// invy = 1 / sub_domains.y
 
+
+
+pub fn compute_bit_orders() -> (Vec<u32>, Vec<u32>) {
+
+    // Initialize arrays
+    let mut rbos = vec![0u32; TOP_DOMAIN_SIZE * 2];
+    let mut folded_rbos = vec![0u32; TOP_DOMAIN_SIZE * 2];
+
+    // Compute RBO (Reversed Bit Order)
+    for i in 0..LOG2_TOP_DOMAIN_SIZE {
+        let start = 1 << i;
+        let end = 1 << (i + 1);
+        
+        let rbo_slice = reverse_bit_order(start as u32, i + 1);
+        rbos[start..end].copy_from_slice(&rbo_slice);
+    }
+
+    // Compute Folded RBO
+    for i in 0..LOG_TOP_DOMAIN_SIZE {
+        let start = 1 << i;
+        let end = 1 << (i + 1);
+        
+        let folded_rbo_slice = folded_reverse_bit_order(start as u32, i + 1);
+        folded_rbos[start..end].copy_from_slice(&folded_rbo_slice);
+    }
+
+    (rbos, folded_rbos)
+}
 // rbos = cp.zeros(TOP_DOMAIN_SIZE * 2, dtype=cp.uint32)
 // for i in range(log2(TOP_DOMAIN_SIZE)):
 //     rbos[2**i:2**(i+1)] = reverse_bit_order(cp.arange(2**i))
