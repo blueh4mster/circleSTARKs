@@ -1,6 +1,6 @@
 use crate::circle::CirclePoint;
 use crate::utils::*;
-use ndarray::s;
+use ndarray::{s, Ix1};
 use ndarray::{Array, ArrayView, Axis, Dimension};
 
 // yet to fix new functions with ndarray and reverse bit order
@@ -16,7 +16,7 @@ fn fft<D, T>(
     invy: &[T],
 ) -> Array<T, D>
 where
-    D : Dimension
+    D: Dimension,
     T: Clone,
 {
     let mut vals = vals.to_owned();

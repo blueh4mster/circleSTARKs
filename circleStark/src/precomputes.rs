@@ -1,4 +1,4 @@
-use crate::circle::{CircleImpl, CirclePoint, G};
+use crate::circle::{CircleImpl, CirclePoint, G, MODULUS};
 use crate::utils::log2;
 use crate::utils::{folded_reverse_bit_order, reverse_bit_order};
 use lambdaworks_math::field::element::FieldElement;
@@ -6,7 +6,6 @@ use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
 const TOP_DOMAIN_SIZE: usize = 1 << 24; // 2**24
 const LOG2_TOP_DOMAIN_SIZE: usize = 24;
-const MODULUS: u32 = 1; // will be changed
 
 //  Generator point
 pub fn generator_point(G: CirclePoint) -> CirclePoint {
