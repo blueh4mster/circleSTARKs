@@ -8,6 +8,7 @@ mod fast_fri;
 mod fri;
 mod fft;
 mod line_functions;
+mod merkle;
 fn main() {
     println!("Hello, world!");
 }
