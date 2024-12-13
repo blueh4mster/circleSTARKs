@@ -53,3 +53,17 @@ fn fold_reverse_bit_order(values: &[CirclePoint]) -> vec<CirclePoint>{
     }
     o
 }
+
+fn rbo_index_to_original(length: usize, index: usize) -> usize {
+    let sub = format!("{:b}", length + index)[3..(format!("{:b}", length + index).len() - 1)]
+        .chars()
+        .rev()
+        .collect::<String>();
+    let sub2 = usize::from_str_radix(sub, 2);
+
+    if (index % 2 == 0){
+        return sub2;
+    } else {
+        return length - 1 - sub2*2;
+    }
+}
