@@ -1,16 +1,10 @@
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
-
-// from zorch.m31 import (
-//     M31, ExtendedM31, Point, modulus, zeros_like, Z, G
-// )
-// use crate::utils::cp
+//use ndarray at last maybe
 use crate::circle::{CircleImpl, CirclePoint};
 // use crate::fast_fft::bary_eval;
 use crate::precomputes::get_subdomains;
-// from fast_fft import bary_eval
 
-// Unsure of domain's Type
 pub fn line_function(
     p1: CirclePoint,
     p2: CirclePoint,
