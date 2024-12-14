@@ -1,5 +1,6 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, log2, halve_domain, get_single_domain_value, halve_single_domain_value};
+use crate::utils::{is_tuple}
 
 const BASE_CASE_SIZE = 128
 const FOLDS_PER_ROUND = 3
@@ -66,4 +67,44 @@ fn rbo_index_to_original(length: usize, index: usize) -> usize {
     } else {
         return length - 1 - sub2*2;
     }
+}
+
+fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (&[CirclePoint],&[CirclePoint]) {
+    for i in 0..FOLDS_PER_ROUND{
+        left = values.iter().step_by(2).collect();
+        right = values.iter().skip(1).step_by(2).collect();
+        let f0 = vec![None; values.len()/2];
+        for j in 0..(values.len()/2) {
+            let L = left[j];
+            let R = right[j];
+            f0[j] = (L+R)/2;
+        }
+        let domain_tmp = domain.iter().step_by(2).collect();
+        if (is_tuple(domain[0])){
+            let f1 = vec![None; values.len()/2];
+            for k in 0..(values.len()/2){
+                let L = left[k];
+                let R = right[k];
+                let x = domain_tmp[k].0;
+                let y = domain_tmp[k].1;
+                f1[k] = (L-R)/2*y;
+            }
+        } else {
+            for k in 0..(values.len()/2){
+                let L = left[k];
+                let R = right[k];
+                let x = domain_tmp[k];
+                f1[k] = (L-R)/2*x;
+            }
+        }
+        let vals = vec![None;f0.len()];
+        for i in 0..f0.len(){
+            let f0val = f0[i];
+            let f1val = f1[i];
+            vals[i] = f0val + coeff*f1val;
+        }
+        values = vals;
+        domain = halve_domain(domain_tmp, true);
+    }
+    return values, domain;
 }

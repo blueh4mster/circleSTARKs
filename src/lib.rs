@@ -9,6 +9,7 @@ mod fri;
 mod fft;
 mod line_functions;
 mod merkle;
+mod utils;
 fn main() {
     println!("Hello, world!");
 }
