@@ -4,7 +4,7 @@ use crate::utils::{folded_reverse_bit_order, reverse_bit_order};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
-const TOP_DOMAIN_SIZE: usize = 1 << 24; // 2**24
+const TOP_DOMAIN_SIZE: u32 = 1 << 24; // 2**24
 const LOG2_TOP_DOMAIN_SIZE: usize = 24;
 
 //  Generator point
@@ -54,7 +54,7 @@ pub fn get_subdomains() -> Vec<CirclePoint> {
         let source_end = 1 << (i + 3) * 3;
 
         // Get the source slice and double it
-        let doubled = &sub_domains[source_start..source_end]
+        let doubled: Vec<CirclePoint> = sub_domains[source_start..source_end]
             .iter()
             .map(|x| x.double())
             .collect();
@@ -77,8 +77,8 @@ pub fn inverse_y(sub_domains: Vec<CirclePoint>) -> Vec<FieldElement<M31>> {
 
 pub fn compute_bit_orders() -> (Vec<u32>, Vec<u32>) {
     // Initialize arrays
-    let mut rbos = vec![0u32; TOP_DOMAIN_SIZE * 2];
-    let mut folded_rbos = vec![0u32; TOP_DOMAIN_SIZE * 2];
+    let mut rbos = vec![0u32; TOP_DOMAIN_SIZE as usize * 2];
+    let mut folded_rbos = vec![0u32; TOP_DOMAIN_SIZE as usize * 2];
 
     // Compute RBO (Reversed Bit Order)
     for i in 0..LOG2_TOP_DOMAIN_SIZE {

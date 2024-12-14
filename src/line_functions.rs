@@ -5,7 +5,7 @@ use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 //     M31, ExtendedM31, Point, modulus, zeros_like, Z, G
 // )
 // use crate::utils::cp
-use crate::circle::{CircleImpl, CirclePoint, MODULUS};
+use crate::circle::{CircleImpl, CirclePoint};
 // use crate::fast_fft::bary_eval;
 use crate::precomputes::get_subdomains;
 // from fast_fft import bary_eval
@@ -14,7 +14,7 @@ use crate::precomputes::get_subdomains;
 pub fn line_function(
     p1: CirclePoint,
     p2: CirclePoint,
-    domain: &[CirclePoint],
+    domain: &Vec<CirclePoint>,
 ) -> Vec<FieldElement<M31>> {
     let a = p2.get_y() - p1.get_y();
     let b = p1.get_x() - p2.get_x();
@@ -57,44 +57,92 @@ pub fn interpolant(
     result
 }
 
+pub fn public_args_to_vanish_and_interp(
+    domain_size: u32, // might be usize
+    indices: &[u32],
+    vals: &[Vec<FieldElement<M31>>],
+    out_domain: Option<CirclePoint>,
+) -> (Vec<FieldElement<M31>>, Vec<Vec<FieldElement<M31>>>) {
+    assert!(indices.len() % 2 == 0, "Indices array has odd length");
+    let next_power_of_2 = 2usize.pow((indices.len() - 1).ilog2() + 1) as u32;
+    assert!(next_power_of_2 < domain_size, "domain size is large");
 
-pub fn public_args_to_vanish_and_interp(domain_size:u32,indices:&[CirclePoint],vals,)
-// def public_args_to_vanish_and_interp(domain_size,
-//                                      indices,
-//                                      vals,
-//                                      out_domain=None):
-//     assert len(indices) % 2 == 0
-//     next_power_of_2 = 2**(len(indices)-1).bit_length() * 2
-//     assert next_power_of_2 < domain_size
-//     lines = []
-//     eval_domain = sub_domains[next_power_of_2: next_power_of_2*2]
-//     if out_domain is not None:
-//         eval_domain = Point(
-//             M31.append(eval_domain.x, out_domain.x),
-//             M31.append(eval_domain.y, out_domain.y)
-//         )
-//     vpoly = M31.zeros(eval_domain.shape) + 1
-//     points = sub_domains[domain_size + cp.array(indices)]
-//     for i in range(0, len(indices), 2):
-//         lines.append(
-//             line_function(points[i], points[i+1], eval_domain)
-//         )
-//         vpoly = vpoly * lines[-1]
-//     interp = vpoly.__class__.zeros((eval_domain.shape[0],) + vals.shape[1:])
-//     for i in range(0, len(indices), 2):
-//         vpoly_adjusted = (
-//             (vpoly / lines[i//2])
-//             .reshape((eval_domain.shape[0],) + (1,) * (len(vals.shape) - 1))
-//         )
-//         y1 = bary_eval(vpoly_adjusted[:next_power_of_2], points[i])
-//         y2 = bary_eval(vpoly_adjusted[:next_power_of_2], points[i+1])
-//         I = interpolant(
-//             points[i], vals[i] / y1,
-//             points[i+1], vals[i+1] / y2,
-//             eval_domain,
-//         )
-//         interp += vpoly_adjusted * I
-//     if out_domain is not None:
-//         return vpoly[next_power_of_2:], interp[next_power_of_2:]
-//     else:
-//         return vpoly, interp
+    let mut lines: Vec<FieldElement<M31>> = Vec::new();
+
+    let sub_domains = get_subdomains();
+    let mut eval_domain: Vec<CirclePoint> = sub_domains
+        .iter()
+        .skip(next_power_of_2 as usize)
+        .take(next_power_of_2 as usize)
+        .cloned()
+        .collect();
+    if let Some(out_domain) = out_domain {
+        eval_domain.push(out_domain);
+    }
+
+    // Initialize vpoly
+    let mut vpoly: Vec<FieldElement<M31>> = vec![FieldElement::new(1); eval_domain.len()];
+
+    let points: Vec<CirclePoint> = indices
+        .iter()
+        .map(|i| sub_domains[(domain_size + i) as usize])
+        .collect();
+
+    for i in (0..indices.len()).step_by(2) {
+        let mut line = line_function(points[i], points[i + 1], &eval_domain); // this might be that we only need a single line , oonstead of all the lines
+        lines.append(&mut line);
+
+        vpoly = vpoly
+            .iter()
+            .zip(lines.clone())
+            .map(|(v, l)| FieldElement::<M31>::new(v.to_raw() * l.to_raw()))
+            .collect();
+    }
+
+    // Initialize interpolation
+    let mut interp = vec![vec![FieldElement::new(0); vals[0].len()]; eval_domain.len()];
+    for i in (0..indices.len()).step_by(2) {
+        let mut vpoly_adjusted = Vec::with_capacity(eval_domain.len());
+        for j in 0..eval_domain.len() {
+            // Divide vpoly by corresponding line (simplified)
+            let divided_val = vpoly[j] / (lines[i / 2]);
+            vpoly_adjusted.push(divided_val);
+        }
+
+        let y1 = FieldElement::new(1); //bary_eval
+        let y2 = FieldElement::new(1); // bary_eval needs to be replaced
+
+        // Compute interpolant
+        let interpolant_vals = interpolant(
+            points[i],
+            points[i + 1],
+            &[vec![vals[i][0] / (&y1)]],
+            &[vec![vals[i + 1][0] / (&y2)]],
+            &eval_domain,
+        );
+
+        // Update interpolation
+        for j in 0..eval_domain.len() {
+            for k in 0..vals[0].len() {
+                // Multiply vpoly_adjusted by interpolant
+                let mul_val = vpoly_adjusted[j] * interpolant_vals[0][j];
+                interp[j][k] = interp[j][k] + mul_val;
+            }
+        }
+    }
+    if out_domain.is_some() {
+        return (
+            vpoly
+                .iter()
+                .skip(next_power_of_2 as usize)
+                .cloned()
+                .collect(),
+            interp
+                .iter()
+                .skip(next_power_of_2 as usize)
+                .cloned()
+                .collect(),
+        );
+    }
+    return (vpoly, interp);
+}
