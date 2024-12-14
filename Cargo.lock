@@ -76,10 +76,7 @@ version = "0.1.0"
 dependencies = [
  "lambdaworks-math",
  "ndarray",
-<<<<<<< HEAD
  "sha2",
-=======
->>>>>>> d8c6a38 (added line_functions)
  "sha256",
 ]
 
