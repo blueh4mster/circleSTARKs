@@ -1,8 +1,11 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
 use crate::utils::{is_tuple, log2};
-use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint};
+use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
 use std::any::Any;
+use lambdaworks_math::field::element::FieldElement;
+use lambdaworks_math::field::fields::mersenne31;
+use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
 const BASE_CASE_SIZE : u32= 128;
 const FOLDS_PER_ROUND : u32 = 3;
@@ -18,7 +21,7 @@ fn extend_trace(field: u32, trace: &[CirclePoint]) -> Vec<CirclePoint>{
     res
 }
 
-fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec<CirclePoint>{
+fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec<FieldElement<M31>>{
     let x1 = P1.get_x();
     let x2 = P2.get_x();
     let y1 = P1.get_y();
@@ -26,8 +29,9 @@ fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec
     let denominator = x1*y2 - x2*y1;
     let a = (y2-y1) / denominator;
     let b = (x1-x2) / denominator;
-    let c = -1 * (a*x1 + b*y1);
-    domain.iter().map(|&(x,y)| a*x + b*y + c).collect();
+    let negative : FieldElement<M31> = FieldElement::new(MODULUS-1);
+    let c = negative * (a*x1 + b*y1);
+    domain.iter().map(|cpoint| a*(cpoint.get_x()) + b*cpoint.get_y() + c).collect()
 }
 
 fn rbo(values: &[CirclePoint]) -> Vec<CirclePoint> {
