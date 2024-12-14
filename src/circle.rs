@@ -86,6 +86,7 @@ impl CircleImpl for CirclePoint {
     }
 }
 
+#[allow(non_snake_case)]
 pub fn G() -> CirclePoint {
     CirclePoint {
         x: FieldElement::new(1268011823),
@@ -93,6 +94,7 @@ pub fn G() -> CirclePoint {
     }
 }
 
+#[allow(non_snake_case)]
 pub fn Z() -> CirclePoint {
     CirclePoint {
         x: FieldElement::new(1),
@@ -140,4 +142,9 @@ pub fn subtract(c1: CirclePoint, c2: CirclePoint) -> CirclePoint {
     let new_x = c1.get_x().to_raw() - c2.get_x().to_raw() + MODULUS;
     let new_y = c1.get_y().to_raw() - c2.get_y().to_raw() + MODULUS;
     return <CirclePoint as CircleImpl>::new(new_x, new_y);
+}
+pub fn multiply(c1: CirclePoint, c2: CirclePoint) -> CirclePoint {
+    let new_x = (c1.get_x().to_raw()).wrapping_mul(c2.get_x().to_raw());
+    let new_y = (c1.get_y().to_raw()).wrapping_mul(c2.get_y().to_raw());
+    return CirclePoint::new(new_x, new_y);
 }

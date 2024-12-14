@@ -35,6 +35,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
+<<<<<<< HEAD
 name = "backtrace"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -50,6 +51,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -59,12 +62,15 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "bytes"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "325918d6fe32f23b19878fe4b34794ae41fc19ddbe53b10571a4874d44ffd39b"
 
 [[package]]
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -76,7 +82,11 @@ version = "0.1.0"
 dependencies = [
  "lambdaworks-math",
  "ndarray",
+<<<<<<< HEAD
  "sha256",
+=======
+ "sha2",
+>>>>>>> 84bd184 (modified circlePoint implementation)
 ]
 
 [[package]]
@@ -150,6 +160,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "gimli"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -162,6 +173,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -381,6 +394,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "sha256"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -394,6 +408,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
 name = "syn"
 version = "2.0.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -405,6 +421,7 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "tokio"
 version = "1.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -416,6 +433,8 @@ dependencies = [
 ]
 
 [[package]]
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
 name = "typenum"
 version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -432,6 +451,7 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+<<<<<<< HEAD
 
 [[package]]
 name = "windows-targets"
@@ -496,3 +516,5 @@ name = "windows_x86_64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
+=======
+>>>>>>> 84bd184 (modified circlePoint implementation)
