@@ -6,16 +6,24 @@ use crate::circle::{
     div, multiply, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS,
 };
 
-pub fn hash(x: &[u8]) -> String {
-    return digest(x);
+pub fn hash(x: &[u8]) -> Vec<u8> {
+    return digest(x).as_bytes().to_vec();
 }
 
-pub fn merkelize(vals: &[CirclePoint]) -> Vec<CirclePoint> {
+pub fn merkelize(vals: Vec<&[u8]>) -> Vec<Option<Vec<u8>>> {
     assert!(vals.len() & (vals.len()-1) == 0);
-    let o = vec![None; vals.len()];
-    o.extend(vals.iter().map(|val| Some(digest(val).as_bytes().to_vec())));
+    let mut o = vec![None; vals.len()];
+    o.extend(vals.iter().map(|val| Some(digest(*val).as_bytes().to_vec())));
     for i in (0..vals.len()).rev() {
-        o[i] = digest(o[i*2] + o[i*2+1]);
+        let o1 = o[i*2].clone().unwrap();
+        let s1 = o1.as_slice();
+        let o2 = o[i*2+1].clone().unwrap();
+        let s2 = o2.as_slice();
+        let result: Vec<u8> = s1.iter()
+        .zip(s2.iter())
+        .map(|(a, b)| a + b) // Add corresponding elements
+        .collect();
+        o[i] = Some(digest(result.as_slice()).as_bytes().to_vec());
     }
     o
 }
@@ -29,13 +37,15 @@ pub fn get_branch(tree: &[CirclePoint], pos: usize) -> Vec<CirclePoint>{
     (0..branch_length).map(|i| tree[(offset_pos >> i)^1]).collect()
 }
 
-pub fn verify_branch(root: &CirclePoint, pos: usize, val: &[u8], branch: &[CirclePoint]) -> bool {
-    let x = hash(val);
+pub fn verify_branch(root: &[u8], mut pos: i32, val: &[u8], branch: Vec<&[u8]>) -> bool {
+    let mut x = hash(val);
     for b in branch{
         if pos != 0{
-            x = hash(b+x);
+            let result: Vec<u8> = b.iter().zip(x.iter()).map(|(first, second)| first + second).collect();
+            x = hash(&result);
         } else {
-            x = hash(x+b)
+            let result: Vec<u8> = x.iter().zip(b.iter()).map(|(f, s)| f + s).collect();
+            x = hash(&result);
         }
         pos = pos/2;
     }

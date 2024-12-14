@@ -1,7 +1,7 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
 use crate::utils::{is_tuple, log2};
-use crate::circle::{CircleImpl, CirclePoint, scalar_division, subtract};
+use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint};
 use std::any::Any;
 
 const BASE_CASE_SIZE : u32= 128;
@@ -19,10 +19,10 @@ fn extend_trace(field: u32, trace: &[CirclePoint]) -> Vec<CirclePoint>{
 }
 
 fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec<CirclePoint>{
-    let x1 = P1.x;
-    let x2 = P2.x;
-    let y1 = P1.y;
-    let y2 = P2.y;
+    let x1 = P1.get_x();
+    let x2 = P2.get_x();
+    let y1 = P1.get_y();
+    let y2 = P2.get_y();
     let denominator = x1*y2 - x2*y1;
     let a = (y2-y1) / denominator;
     let b = (x1-x2) / denominator;
@@ -87,26 +87,15 @@ fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (
             // instead of L+R, use circle point addition
             f0[j] = Some(scalar_division(L+R, 2));
         }
-        if is_tuple(&domain[0] as &dyn Any){
-            let domain_tmp : Vec<(CirclePoint, CirclePoint)>= domain.iter().cloned().step_by(2).collect();
-            let f1 = vec![None; values.len()/2];
-            for k in 0..(values.len()/2){
-                let L = left[k];
-                let R = right[k];
-                let x = domain_tmp[k].0;
-                let y = domain_tmp[k].1;
-                f1[k] = Some(scalar_division(subtract(L, R),2*y));
-            }
-        } else {
-            let domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
-            let f1 : Vec<Option<CirclePoint>> = vec![None; f0.len()];
-            for k in 0..(values.len()/2){
-                let L = left[k];
-                let R = right[k];
-                let x = domain_tmp[k];
+        
+        let domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
+        let f1 : Vec<Option<CirclePoint>> = vec![None; f0.len()];
+        for k in 0..(values.len()/2){
+            let L = left[k];
+            let R = right[k];
+            let x = domain_tmp[k];
                 // not sure about the type of x, might have to use scalar multiply 
-                f1[k] = Some(scalar_division(subtract(L, R),2*x));
-            }
+            f1[k] = Some(div(subtract(L, R),scalar_multiply(x, 2)));
         }
         let vals = vec![None;f0.len()];
         for i in 0..f0.len(){
