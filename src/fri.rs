@@ -2,9 +2,8 @@ use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
 use crate::utils::{is_tuple, log2};
 use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
-use std::any::Any;
+use std::ops::Add;
 use lambdaworks_math::field::element::FieldElement;
-use lambdaworks_math::field::fields::mersenne31;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
 const BASE_CASE_SIZE : u32= 128;
@@ -80,11 +79,11 @@ fn rbo_index_to_original(length: usize, index: usize) -> usize {
     }
 }
 
-fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (&[CirclePoint],&[CirclePoint]) {
+fn fold(mut values: &mut [CirclePoint], coeff: u32, mut domain: &mut[CirclePoint]) -> (Vec<CirclePoint>, Vec<CirclePoint>) {
     for i in 0..FOLDS_PER_ROUND{
         let left : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
         let right : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).collect();
-        let f0: Vec<Option<CirclePoint>> = vec![None; values.len()/2];
+        let mut f0: Vec<Option<CirclePoint>> = vec![None; values.len()/2];
         for j in 0..(values.len()/2) {
             let L = left[j];
             let R = right[j];
@@ -92,8 +91,8 @@ fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (
             f0[j] = Some(scalar_division(L+R, 2));
         }
         
-        let domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
-        let f1 : Vec<Option<CirclePoint>> = vec![None; f0.len()];
+        let mut domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
+        let mut f1 : Vec<Option<CirclePoint>> = vec![None; f0.len()];
         for k in 0..(values.len()/2){
             let L = left[k];
             let R = right[k];
@@ -101,14 +100,15 @@ fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (
                 // not sure about the type of x, might have to use scalar multiply 
             f1[k] = Some(div(subtract(L, R),scalar_multiply(x, 2)));
         }
-        let vals = vec![None;f0.len()];
+        let mut vals = vec![None;f0.len()];
         for i in 0..f0.len(){
-            let f0val = f0[i];
-            let f1val = f1[i];
-            vals[i] = f0val + coeff*f1val;
+            let f0val = f0[i].unwrap();
+            let f1val = f1[i].unwrap();
+            vals[i] = Some(f0val.add(scalar_multiply(f1val, coeff)));
         }
         values = vals;
         domain = halve_domain(domain_tmp.as_mut_slice(), true);
+
     }
-    return values, domain;
+    return (values.to_vec(), domain.to_vec());
 }
