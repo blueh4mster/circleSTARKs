@@ -6,8 +6,5 @@ edition = "2021"
 [dependencies]
 lambdaworks-math = "0.10.0"
 ndarray = "0.16.1"
-<<<<<<< HEAD
 sha256 = "1.5.0"
-=======
 sha2 = "0.10.8"
->>>>>>> 84bd184 (modified circlePoint implementation)
