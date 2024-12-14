@@ -1,16 +1,18 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
-use crate::fft::{fft, inv_fft, get_initial_domain_of_size, log2, halve_domain, get_single_domain_value, halve_single_domain_value};
-use crate::utils::{is_tuple}
+use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
+use crate::utils::{is_tuple, log2};
+use crate::circle::{CircleImpl, CirclePoint};
 
-const BASE_CASE_SIZE = 128
-const FOLDS_PER_ROUND = 3
-const FOLD_SIZE_RATIO = 2**FOLDS_PER_ROUND
-const NUM_CHALLENGES = 80
+const BASE_CASE_SIZE : u32= 128;
+const FOLDS_PER_ROUND : u32 = 3;
+const base : u32 = 2;
+const FOLD_SIZE_RATIO : u32= base.pow(FOLDS_PER_ROUND);
+const NUM_CHALLENGES : u32 = 80;
 
-fn extend_trace(field: u32, trace: &[CirclePoint]) -> vec<CirclePoint>{
-    let small_domain = get_initial_domain_of_size(field, len(trace));
+fn extend_trace(field: u32, trace: &[CirclePoint]) -> Vec<CirclePoint>{
+    let small_domain = get_initial_domain_of_size(field, trace.len());
     let coeffs = fft(trace, small_domain);
-    let big_domain = get_initial_domain_of_size(field, len(trace)*2);
+    let big_domain = get_initial_domain_of_size(field, trace.len()*2);
     let res = inv_fft(trace, big_domain);
     res
 }

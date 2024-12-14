@@ -2,7 +2,7 @@ use ndarray::{s, Array, Axis, Dimension};
 use std::any::Any;
 use crate::circle::{CirclePoint}
 
-fn is_tuple(value: &dyn Any) -> bool {
+pub fn is_tuple(value: &dyn Any) -> bool {
     value.is::<(CirclePoint, CirclePoint)>()
 }
 pub fn log2(x: u32) -> usize {

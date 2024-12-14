@@ -7,7 +7,7 @@ use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
 // all the functions are specific to M31
-fn get_generator(field_modulus: u32) -> CirclePoint {
+pub fn get_generator(field_modulus: u32) -> CirclePoint {
     for y in 2..field_modulus {
         let y_pt: FieldElement<M31> = FieldElement::new(y);
         let x_pt: FieldElement<M31> = FieldElement::new(1 - y * y).sqrt().unwrap().0; // check docs for once , if its the first value or not
@@ -24,7 +24,7 @@ fn get_generator(field_modulus: u32) -> CirclePoint {
     panic!("Could not find generator");
 }
 
-fn get_initial_domain_of_size(field_modulus: u32, size: usize) -> Vec<CirclePoint> {
+pub fn get_initial_domain_of_size(field_modulus: u32, size: usize) -> Vec<CirclePoint> {
     assert!(size < field_modulus as usize);
     let mut g = get_generator(field_modulus);
 
@@ -42,7 +42,7 @@ fn get_initial_domain_of_size(field_modulus: u32, size: usize) -> Vec<CirclePoin
     domain
 }
 
-fn get_single_domain_value(field_modulus: u32, size: usize, index: usize) -> CirclePoint {
+pub fn get_single_domain_value(field_modulus: u32, size: usize, index: usize) -> CirclePoint {
     assert!(size < field_modulus as usize);
     let mut g = get_generator(field_modulus);
 
@@ -54,7 +54,7 @@ fn get_single_domain_value(field_modulus: u32, size: usize, index: usize) -> Cir
 }
 
 // for circle points onlys
-fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<CirclePoint> {
+pub fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<CirclePoint> {
     let new_length = if preserve_length {
         domain.len()
     } else {
@@ -63,11 +63,11 @@ fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<CirclePoin
     domain.iter().take(new_length).map(|c| c.double()).collect()
 }
 
-fn halve_single_domain_value(value: &CirclePoint) -> FieldElement<M31> {
+pub fn halve_single_domain_value(value: &CirclePoint) -> FieldElement<M31> {
     value.get_x().clone()
 }
 
-fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
+pub fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
     if vals.len() == 1 {
         return vals.to_vec();
     }
@@ -123,7 +123,7 @@ fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint>
     result
 }
 
-fn inv_fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
+pub fn inv_fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
     if vals.len() == 1 {
         return vals.to_vec();
     }
