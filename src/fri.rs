@@ -62,7 +62,7 @@ fn rbo_index_to_original(length: usize, index: usize) -> usize {
         .chars()
         .rev()
         .collect::<String>();
-    let sub2 = usize::from_str_radix(sub, 2);
+    let sub2 = usize::from_str_radix(sub.as_str(), 2);
 
     if (index % 2 == 0){
         return sub2;
@@ -82,7 +82,7 @@ fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (
             f0[j] = (L+R)/2;
         }
         let domain_tmp = domain.iter().step_by(2).collect();
-        if (is_tuple(domain[0])){
+        if (is_tuple(&domain[0] as &dyn Any)){
             let f1 = vec![None; values.len()/2];
             for k in 0..(values.len()/2){
                 let L = left[k];
@@ -106,7 +106,8 @@ fn fold(values: &mut [CirclePoint], coeff: u32, domain: &mut [CirclePoint]) -> (
             vals[i] = f0val + coeff*f1val;
         }
         values = vals;
-        domain = halve_domain(domain_tmp, true);
+        let mut domain_slice = &domain_tmp;
+        domain = halve_domain(domain_slice, true);
     }
     return values, domain;
 }

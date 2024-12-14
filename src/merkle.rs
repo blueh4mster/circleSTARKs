@@ -21,7 +21,7 @@ pub fn merkelize(vals: &[CirclePoint]) -> vec<CirclePoint> {
 }
 
 pub fn get_root(tree: &[CirclePoint]) -> Option<CirclePoint> {
-    return tree[1];
+    return tree[1]?;
 }
 pub fn get_branch(tree: &[CirclePoint], pos: u32) -> vec<CirclePoint>{
     let offset_pos = (pos + tree.len())/2;
