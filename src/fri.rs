@@ -12,7 +12,7 @@ const BASE : u32 = 2;
 const FOLD_SIZE_RATIO : u32= BASE.pow(FOLDS_PER_ROUND);
 const NUM_CHALLENGES : u32 = 80;
 
-fn extend_trace(field: u32, trace: &[CirclePoint]) -> Vec<CirclePoint>{
+fn extend_trace(field: u32, trace: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     let small_domain = get_initial_domain_of_size(field, trace.len());
     let coeffs = fft(trace, Some(&small_domain));
     let big_domain = get_initial_domain_of_size(field, trace.len()*2);
@@ -33,7 +33,7 @@ fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec
     domain.iter().map(|cpoint| a*(cpoint.get_x()) + b*cpoint.get_y() + c).collect()
 }
 
-fn rbo(values: &[CirclePoint]) -> Vec<CirclePoint> {
+fn rbo(values: &Vec<CirclePoint>) -> Vec<CirclePoint> {
     if values.len() == 1{
         return values.to_vec();
     }
@@ -46,7 +46,7 @@ fn rbo(values: &[CirclePoint]) -> Vec<CirclePoint> {
     return res;
 }
 
-fn fold_reverse_bit_order(values: &[CirclePoint]) -> Vec<Option<CirclePoint>>{
+fn fold_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     let l : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
     let r : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).rev().collect();
     let L = rbo(&l);
@@ -62,7 +62,8 @@ fn fold_reverse_bit_order(values: &[CirclePoint]) -> Vec<Option<CirclePoint>>{
         o[j] = Some(x);
         j+=2;
     }
-    o
+    let res: Vec<CirclePoint> = o.into_iter().filter_map(|u| u).collect();
+    res
 }
 
 fn rbo_index_to_original(length: usize, index: usize) -> usize {
@@ -79,7 +80,7 @@ fn rbo_index_to_original(length: usize, index: usize) -> usize {
     }
 }
 
-fn fold(mut values: &mut [CirclePoint], coeff: u32, mut domain: &mut[CirclePoint]) -> (Vec<CirclePoint>, Vec<CirclePoint>) {
+fn fold(mut values: Vec<CirclePoint>, coeff: u32, mut domain: Vec<CirclePoint>) -> (Vec<CirclePoint>, Vec<CirclePoint>) {
     for i in 0..FOLDS_PER_ROUND{
         let left : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
         let right : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).collect();
@@ -106,9 +107,10 @@ fn fold(mut values: &mut [CirclePoint], coeff: u32, mut domain: &mut[CirclePoint
             let f1val = f1[i].unwrap();
             vals[i] = Some(f0val.add(scalar_multiply(f1val, coeff)));
         }
-        values = vals;
-        domain = halve_domain(domain_tmp.as_mut_slice(), true);
-
+        let vals2 : Vec<CirclePoint> = vals.into_iter().filter_map(|e| e).collect();
+        values = vals2;
+        let domain2= halve_domain(&domain_tmp, true);
+        domain = domain2;
     }
-    return (values.to_vec(), domain.to_vec());
+    return (values, domain);
 }

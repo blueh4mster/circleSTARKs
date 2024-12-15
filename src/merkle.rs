@@ -1,10 +1,4 @@
-//types very dicey
-
 use sha256::digest;
-
-use crate::circle::{
-    div, multiply, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS,
-};
 
 pub fn hash(x: &[u8]) -> Vec<u8> {
     return digest(x).as_bytes().to_vec();
@@ -28,10 +22,10 @@ pub fn merkelize(vals: Vec<&[u8]>) -> Vec<Option<Vec<u8>>> {
     o
 }
 
-pub fn get_root(tree: &[CirclePoint]) -> Option<CirclePoint> {
+pub fn get_root(tree: Vec<&[u8]>) -> Option<&[u8]> {
     return Some(tree[1]);
 }
-pub fn get_branch(tree: &[CirclePoint], pos: usize) -> Vec<CirclePoint>{
+pub fn get_branch(tree: Vec<&[u8]>, pos: usize) -> Vec<&[u8]>{
     let offset_pos = (pos + tree.len())/2;
     let branch_length = (tree.len() as u64).next_power_of_two().count_ones() as usize - 2;
     (0..branch_length).map(|i| tree[(offset_pos >> i)^1]).collect()

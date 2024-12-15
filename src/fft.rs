@@ -54,7 +54,7 @@ pub fn get_single_domain_value(field_modulus: u32, size: usize, index: usize) ->
 }
 
 // for circle points onlys
-pub fn halve_domain(domain: &[CirclePoint], preserve_length: bool) -> Vec<CirclePoint> {
+pub fn halve_domain(domain: &Vec<CirclePoint>, preserve_length: bool) -> Vec<CirclePoint> {
     let new_length = if preserve_length {
         domain.len()
     } else {
@@ -67,7 +67,7 @@ pub fn halve_single_domain_value(value: &CirclePoint) -> FieldElement<M31> {
     value.get_x().clone()
 }
 
-pub fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
+pub fn fft(vals:&Vec<CirclePoint>, domain: Option<&Vec<CirclePoint>>) -> Vec<CirclePoint> {
     if vals.len() == 1 {
         return vals.to_vec();
     }
@@ -123,7 +123,7 @@ pub fn fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePo
     result
 }
 
-pub fn inv_fft(vals: &[CirclePoint], domain: Option<&[CirclePoint]>) -> Vec<CirclePoint> {
+pub fn inv_fft(vals: &Vec<CirclePoint>, domain: Option<&Vec<CirclePoint>>) -> Vec<CirclePoint> {
     if vals.len() == 1 {
         return vals.to_vec();
     }
