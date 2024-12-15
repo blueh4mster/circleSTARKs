@@ -155,3 +155,19 @@ pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoin
 // def unchunkify(field, data):
 //     return [field.from_bytes(data[i:i+16]) for i in range(0, len(data), 16)]
 
+pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<&[u8]>{
+    let mut v = Vec::new();
+    for i in 0..values.len(){
+        let element = values[i..i + (FOLD_SIZE_RATIO as usize)]
+        .iter()
+        .flat_map(|&x| x.to_le_bytes())
+        .collect();
+        v.push(element);
+    }
+    v
+}
+
+pub fn unchunkify(field: &FieldElement<M31>, data: &[u8]) -> Vec<FieldElement<M31>>
+{
+    data.chunks(16).map(|chunk| field.from_bytes(chunk)).collect()
+}
