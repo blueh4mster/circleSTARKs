@@ -146,14 +146,7 @@ pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoin
     return o[halflen..].iter().all(|&c| c.get_x() == zero && c.get_y() == zero );
 }
 
-// def chunkify(values):
-//     return [
-//         b''.join(x.to_bytes() for x in values[i:i+FOLD_SIZE_RATIO])
-//         for i in range(0, len(values), FOLD_SIZE_RATIO)
-//     ]
-
-// def unchunkify(field, data):
-//     return [field.from_bytes(data[i:i+16]) for i in range(0, len(data), 16)]
+//need to_bytes and from_bytes functions for CirclePoint
 
 pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<&[u8]>{
     let mut v = Vec::new();
