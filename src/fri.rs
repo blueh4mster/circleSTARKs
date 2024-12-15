@@ -1,6 +1,6 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
-use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
+use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS, zero};
 use crate::utils::folded_reverse_bit_order;
 use std::ops::Add;
 use lambdaworks_math::field::element::FieldElement;
@@ -46,7 +46,7 @@ pub fn rbo(values: &Vec<CirclePoint>) -> Vec<CirclePoint> {
     return res;
 }
 
-pub fn fold_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
+pub fn folded_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     let l : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
     let r : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).rev().collect();
     let L = rbo(&l);
@@ -142,8 +142,7 @@ pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> V
 pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoint>) -> bool{
     let halflen = evaluations.len()/2;
     let o = fft(&fold_reverse_bit_order(evaluations), Some(&fold_reverse_bit_order(domain)));
-    let zero = FieldElement::<M31>::zero();
-    return o[halflen..].iter().all(|&c| c.get_x() == zero && c.get_y() == zero );
+    return o[halflen..].iter().all(|&c| c == zero() );
 }
 
 //need to_bytes and from_bytes functions for CirclePoint
