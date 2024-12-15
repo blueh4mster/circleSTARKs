@@ -12,7 +12,7 @@ const BASE : u32 = 2;
 const FOLD_SIZE_RATIO : u32= BASE.pow(FOLDS_PER_ROUND);
 const NUM_CHALLENGES : u32 = 80;
 
-fn extend_trace(field: u32, trace: &Vec<CirclePoint>) -> Vec<CirclePoint>{
+pub fn extend_trace(field: u32, trace: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     let small_domain = get_initial_domain_of_size(field, trace.len());
     let coeffs = fft(trace, Some(&small_domain));
     let big_domain = get_initial_domain_of_size(field, trace.len()*2);
@@ -20,7 +20,7 @@ fn extend_trace(field: u32, trace: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     res
 }
 
-fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec<FieldElement<M31>>{
+pub fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec<FieldElement<M31>>{
     let x1 = P1.get_x();
     let x2 = P2.get_x();
     let y1 = P1.get_y();
@@ -33,7 +33,7 @@ fn line_function(P1: CirclePoint, P2: CirclePoint, domain: &[CirclePoint]) ->Vec
     domain.iter().map(|cpoint| a*(cpoint.get_x()) + b*cpoint.get_y() + c).collect()
 }
 
-fn rbo(values: &Vec<CirclePoint>) -> Vec<CirclePoint> {
+pub fn rbo(values: &Vec<CirclePoint>) -> Vec<CirclePoint> {
     if values.len() == 1{
         return values.to_vec();
     }
@@ -46,7 +46,7 @@ fn rbo(values: &Vec<CirclePoint>) -> Vec<CirclePoint> {
     return res;
 }
 
-fn fold_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
+pub fn fold_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     let l : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
     let r : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).rev().collect();
     let L = rbo(&l);
@@ -66,7 +66,7 @@ fn fold_reverse_bit_order(values: &Vec<CirclePoint>) -> Vec<CirclePoint>{
     res
 }
 
-fn rbo_index_to_original(length: usize, index: usize) -> usize {
+pub fn rbo_index_to_original(length: usize, index: usize) -> usize {
     let sub = format!("{:b}", length + index)[3..(format!("{:b}", length + index).len() - 1)]
         .chars()
         .rev()
@@ -80,7 +80,7 @@ fn rbo_index_to_original(length: usize, index: usize) -> usize {
     }
 }
 
-fn fold(mut values: Vec<CirclePoint>, coeff: u32, mut domain: Vec<CirclePoint>) -> (Vec<CirclePoint>, Vec<CirclePoint>) {
+pub fn fold(mut values: Vec<CirclePoint>, coeff: u32, mut domain: Vec<CirclePoint>) -> (Vec<CirclePoint>, Vec<CirclePoint>) {
     for i in 0..FOLDS_PER_ROUND{
         let left : Vec<CirclePoint>= values.iter().cloned().step_by(2).collect();
         let right : Vec<CirclePoint>= values.iter().cloned().skip(1).step_by(2).collect();
@@ -115,7 +115,7 @@ fn fold(mut values: Vec<CirclePoint>, coeff: u32, mut domain: Vec<CirclePoint>) 
     return (values, domain);
 }
 
-fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u32>{
+pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u32>{
     let mut challenge_data = Vec::new();
     for i in 0..((num_challenges + 7) / 8) {
         let mut hash_input = Vec::new();
@@ -139,9 +139,19 @@ fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u
         }).collect()
 }
 
-fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoint>) -> bool{
+pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoint>) -> bool{
     let halflen = evaluations.len()/2;
     let o = fft(&fold_reverse_bit_order(evaluations), Some(&fold_reverse_bit_order(domain)));
     let zero = FieldElement::<M31>::zero();
     return o[halflen..].iter().all(|&c| c.get_x() == zero && c.get_y() == zero );
 }
+
+// def chunkify(values):
+//     return [
+//         b''.join(x.to_bytes() for x in values[i:i+FOLD_SIZE_RATIO])
+//         for i in range(0, len(values), FOLD_SIZE_RATIO)
+//     ]
+
+// def unchunkify(field, data):
+//     return [field.from_bytes(data[i:i+16]) for i in range(0, len(data), 16)]
+
