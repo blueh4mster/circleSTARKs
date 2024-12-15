@@ -1,6 +1,7 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
 use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
+use crate::utils::folded_reverse_bit_order;
 use std::ops::Add;
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
@@ -136,4 +137,11 @@ fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u
             );
             value % domain_size
         }).collect()
+}
+
+fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoint>) -> bool{
+    let halflen = evaluations.len()/2;
+    let o = fft(&fold_reverse_bit_order(evaluations), Some(&fold_reverse_bit_order(domain)));
+    let zero = FieldElement::<M31>::zero();
+    return o[halflen..].iter().all(|&c| c.get_x() == zero && c.get_y() == zero );
 }
