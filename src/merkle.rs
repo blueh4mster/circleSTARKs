@@ -25,10 +25,10 @@ pub fn merkelize(vals: Vec<&[u8]>) -> Vec<Option<Vec<u8>>> {
 pub fn get_root(tree: Vec<&[u8]>) -> Option<&[u8]> {
     return Some(tree[1]);
 }
-pub fn get_branch(tree: Vec<&[u8]>, pos: usize) -> Vec<&[u8]>{
+pub fn get_branch(tree: Vec<Vec<u8>>, pos: usize) -> Vec<Vec<u8>>{
     let offset_pos = (pos + tree.len())/2;
     let branch_length = (tree.len() as u64).next_power_of_two().count_ones() as usize - 2;
-    (0..branch_length).map(|i| tree[(offset_pos >> i)^1]).collect()
+    (0..branch_length).map(|i| tree[(offset_pos >> i)^1].clone()).collect()
 }
 
 pub fn verify_branch(root: &[u8], mut pos: i32, val: &[u8], branch: Vec<&[u8]>) -> bool {

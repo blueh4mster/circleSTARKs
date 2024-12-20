@@ -3,6 +3,7 @@ use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_sin
 use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
 use std::ops::Add;
 use crate::utils::{log2};
+use std::collections::HashMap;
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
@@ -165,14 +166,15 @@ pub fn unchunkify(field: &FieldElement<M31>, data: &[u8]) -> Vec<FieldElement<M3
     data.chunks(16).map(|chunk| field.from_bytes(chunk)).collect()
 }
 
-pub struct Result {
-    roots: Vec<u8>,
-    branches: Vec<Vec<u8>>,
+pub struct Proof {
+    // trees : Vec<Vec<Option<Vec<u8>>>>
+    roots: Vec<Vec<u8>>,
+    branches: Vec<Vec<Vec<Vec<u8>>>>,
     leaf_values: Vec<Vec<CirclePoint>>,
     final_values: Vec<CirclePoint>
 }
 
-pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Result {
+pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> proof {
     let domain = folded_reverse_bit_order(&get_initial_domain_of_size(MODULUS, evaluations.len()));
     let values = folded_reverse_bit_order(evaluations);
     let leaves = Vec::new();
@@ -183,7 +185,7 @@ pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Result {
     for i in 0..rounds{
         leaves.push(values);
         trees.push(merkelize(chunkify(&values)));
-        roots.push(trees[trees.len()-1][1]);
+        roots.push(trees[trees.len()-1][1].unwrap());
         let fold_factor : u32 = 1; //wasn't able to translate fold_factor = E(get_challenges(b''.join(roots), M, 4))
         (domain,values) = fold(values, fold_factor, domain);
     }
@@ -193,6 +195,25 @@ pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Result {
         .flatten()
         .cloned()
         .collect();
-
+    let challenges = get_challenges(entropy, evaluations.len() as u32 >> FOLDS_PER_ROUND , NUM_CHALLENGES as usize);
+    let round_challenges = (0..rounds).map(|i| {
+        challenges.iter().map(|&c| c >> ((i as u32)*FOLDS_PER_ROUND)).collect()}).collect();
+    let mut branches = Vec::new();
+    for (r_challenges, tree) in round_challenges.iter().zip(trees.iter()) {
+        let mut round_branches = Vec::new();
+        for &c in r_challenges {
+            round_branches.push(get_branch(tree, c));
+        }
+        branches.push(round_branches);
+    }
+    let mut leaf_values = Vec::new();
+    for (leaf_list, r_challenges) in leaves.iter().zip(round_challenges.iter()) {
+        let mut round_leaf_values = Vec::new();
+        for &c in r_challenges {
+            round_leaf_values.push(leaf_list[c * FOLD_SIZE_RATIO..(c + 1) * FOLD_SIZE_RATIO]);
+        }
+        leaf_values.push(round_leaf_values);
+    }
+    Proof { roots: roots, branches: branches, leaf_values: leaf_values, final_values: values }
 
 }
