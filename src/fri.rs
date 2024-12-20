@@ -174,7 +174,7 @@ pub struct Proof {
     final_values: Vec<CirclePoint>
 }
 
-pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> proof {
+pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Proof {
     let domain = folded_reverse_bit_order(&get_initial_domain_of_size(MODULUS, evaluations.len()));
     let values = folded_reverse_bit_order(evaluations);
     let leaves = Vec::new();
