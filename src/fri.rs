@@ -1,8 +1,8 @@
 use crate::merkle::{merkelize, hash, verify_branch, get_branch};
 use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_single_domain_value, halve_single_domain_value};
-use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS, zero};
-use crate::utils::folded_reverse_bit_order;
+use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
 use std::ops::Add;
+use crate::utils::{log2};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
@@ -92,7 +92,7 @@ pub fn fold(mut values: Vec<CirclePoint>, coeff: u32, mut domain: Vec<CirclePoin
             f0[j] = Some(scalar_division(L+R, 2));
         }
         
-        let mut domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
+        let domain_tmp :Vec<CirclePoint> = domain.iter().cloned().step_by(2).collect();
         let mut f1 : Vec<Option<CirclePoint>> = vec![None; f0.len()];
         for k in 0..(values.len()/2){
             let L = left[k];
@@ -141,8 +141,9 @@ pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> V
 
 pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoint>) -> bool{
     let halflen = evaluations.len()/2;
-    let o = fft(&fold_reverse_bit_order(evaluations), Some(&fold_reverse_bit_order(domain)));
-    return o[halflen..].iter().all(|&c| c == zero() );
+    let o = fft(&folded_reverse_bit_order(evaluations), Some(&folded_reverse_bit_order(domain)));
+    let zero = CirclePoint::zero();
+    return o[halflen..].iter().all(|&c| c == zero );
 }
 
 //need to_bytes and from_bytes functions for CirclePoint
@@ -162,4 +163,36 @@ pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<&[u8]>{
 pub fn unchunkify(field: &FieldElement<M31>, data: &[u8]) -> Vec<FieldElement<M31>>
 {
     data.chunks(16).map(|chunk| field.from_bytes(chunk)).collect()
+}
+
+pub struct Result {
+    roots: Vec<u8>,
+    branches: Vec<Vec<u8>>,
+    leaf_values: Vec<Vec<CirclePoint>>,
+    final_values: Vec<CirclePoint>
+}
+
+pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Result {
+    let domain = folded_reverse_bit_order(&get_initial_domain_of_size(MODULUS, evaluations.len()));
+    let values = folded_reverse_bit_order(evaluations);
+    let leaves = Vec::new();
+    let trees = Vec::new();
+    let roots = Vec::new();
+    let rounds = log2((evaluations.len() as u32)/(BASE_CASE_SIZE as u32)) /FOLDS_PER_ROUND as usize;
+    print!("generating proof");
+    for i in 0..rounds{
+        leaves.push(values);
+        trees.push(merkelize(chunkify(&values)));
+        roots.push(trees[trees.len()-1][1]);
+        let fold_factor : u32 = 1; //wasn't able to translate fold_factor = E(get_challenges(b''.join(roots), M, 4))
+        (domain,values) = fold(values, fold_factor, domain);
+    }
+    let entropy= roots
+        .iter()
+        .chain(values.iter().map(|x| x.to_bytes()))
+        .flatten()
+        .cloned()
+        .collect();
+
+
 }
