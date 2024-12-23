@@ -154,7 +154,7 @@ pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<&[u8]>{
     for i in 0..values.len(){
         let element = values[i..i + (FOLD_SIZE_RATIO as usize)]
         .iter()
-        .flat_map(|&x| x.to_le_bytes())
+        .flat_map(|&x| x.to_bytes())
         .collect();
         v.push(element);
     }
@@ -170,7 +170,7 @@ pub struct Proof {
     // trees : Vec<Vec<Option<Vec<u8>>>>
     roots: Vec<Vec<u8>>,
     branches: Vec<Vec<Vec<Vec<u8>>>>,
-    leaf_values: Vec<Vec<CirclePoint>>,
+    leaf_values: VecVec<Vec<CirclePoint>>>,
     final_values: Vec<CirclePoint>
 }
 
@@ -210,10 +210,56 @@ pub fn prove_low_degree(evaluations: &Vec<CirclePoint>) -> Proof {
     for (leaf_list, r_challenges) in leaves.iter().zip(round_challenges.iter()) {
         let mut round_leaf_values = Vec::new();
         for &c in r_challenges {
-            round_leaf_values.push(leaf_list[c * FOLD_SIZE_RATIO..(c + 1) * FOLD_SIZE_RATIO]);
+            let start = c * FOLD_SIZE_RATIO;
+            let end = (c + 1) * FOLD_SIZE_RATIO;
+            if start < leaf_list.len() && end <= leaf_list.len() {
+                round_leaf_values.push(leaf_list[start..end].to_vec()); 
+            } else {
+                round_leaf_values.push(Vec::new());
+            }
         }
         leaf_values.push(round_leaf_values);
     }
-    Proof { roots: roots, branches: branches, leaf_values: leaf_values, final_values: values }
+    Proof { roots, branches, leaf_values, final_values: values }
+}
 
+pub fn verify_low_degree(proof: Proof) -> bool{
+    let roots = proof.roots;
+    let branches = proof.branches;
+    let leaf_values = proof.leaf_values;
+    let final_values = proof.final_values;
+    let M = MODULUS;
+    let len_evaluations = final_values.len() << (FOLDS_PER_ROUND as usize * roots.len());
+
+    let mut entropy = Vec::new();
+    for root in roots {
+        entropy.extend(root);
+    }
+    for &x in &final_values {
+        entropy.extend(x.to_bytes());
+    }
+    let challenges = get_challenges(&entropy, len_evaluations as u32>> FOLDS_PER_ROUND, NUM_CHALLENGES as usize);
+
+    for i in 0..roots.len(){
+        let fold_factor : u32 = 1; //wasn't able to translate fold_factor = E(get_challenges(b''.join(roots), M, 4))
+        let evaluation_size = len_evaluations >> (i * FOLDS_PER_ROUND as usize);
+        let positions: Vec<usize> = challenges.iter().flat_map(|&c| (c * FOLD_SIZE_RATIO..(c + 1) * FOLD_SIZE_RATIO).map(|x| x as usize)).collect();
+        let mut domain = Vec::new();
+        if i==0{
+            let domain_tmp = Vec::new();
+            for pos in positions{
+                domain_tmp.push(get_single_domain_value(M, evaluation_size, rbo_index_to_original(evaluation_size, pos)));
+            }
+            domain = domain_tmp;
+        } else {
+            let domain_tmp = Vec::new();
+            for pos in positions{
+                domain_tmp.push(halve_single_domain_value(&get_single_domain_value(M, evaluation_size*2, rbo_index_to_original(evaluation_size*2, pos*2))));
+            }
+            domain = domain_tmp;
+        }
+        let flattened_values = leaf_values[i].iter().flat_map(|v| v.iter().cloned()).collect();
+        let (folded_values, _) = fold(flattened_values, fold_factor, domain);
+    }
+    return true;
 }
