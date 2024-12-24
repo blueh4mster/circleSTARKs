@@ -1,13 +1,13 @@
 use sha256::digest;
 
-pub fn hash(x: &[u8]) -> Vec<u8> {
+pub fn hash(x: Vec<u8>) -> Vec<u8> {
     return digest(x).as_bytes().to_vec();
 }
 
-pub fn merkelize(vals: Vec<&[u8]>) -> Vec<Option<Vec<u8>>> {
+pub fn merkelize(vals: Vec<Vec<u8>>) -> Vec<Option<Vec<u8>>> {
     assert!(vals.len() & (vals.len()-1) == 0);
     let mut o = vec![None; vals.len()];
-    o.extend(vals.iter().map(|val| Some(digest(*val).as_bytes().to_vec())));
+    o.extend(vals.iter().map(|val| Some(digest(val).as_bytes().to_vec())));
     for i in (0..vals.len()).rev() {
         let o1 = o[i*2].clone().unwrap();
         let s1 = o1.as_slice();
@@ -31,15 +31,15 @@ pub fn get_branch(tree: Vec<Vec<u8>>, pos: usize) -> Vec<Vec<u8>>{
     (0..branch_length).map(|i| tree[(offset_pos >> i)^1].clone()).collect()
 }
 
-pub fn verify_branch(root: &[u8], mut pos: i32, val: &[u8], branch: Vec<&[u8]>) -> bool {
+pub fn verify_branch(root: Vec<u8>, mut pos: i32, val: Vec<u8>, branch: Vec<Vec<u8>>) -> bool {
     let mut x = hash(val);
     for b in branch{
         if pos != 0{
             let result: Vec<u8> = b.iter().zip(x.iter()).map(|(first, second)| first + second).collect();
-            x = hash(&result);
+            x = hash(result);
         } else {
             let result: Vec<u8> = x.iter().zip(b.iter()).map(|(f, s)| f + s).collect();
-            x = hash(&result);
+            x = hash(result);
         }
         pos = pos/2;
     }

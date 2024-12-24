@@ -3,7 +3,6 @@ use crate::fft::{fft, inv_fft, get_initial_domain_of_size, halve_domain, get_sin
 use crate::circle::{div, scalar_division, scalar_multiply, subtract, CircleImpl, CirclePoint, MODULUS};
 use std::ops::Add;
 use crate::utils::{log2};
-use std::collections::HashMap;
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
 
@@ -123,7 +122,7 @@ pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> V
         hash_input.extend_from_slice(root);
         hash_input.push((i / 256) as u8);
         hash_input.push((i % 256) as u8);
-        let hash_output = hash(&hash_input);
+        let hash_output = hash(hash_input);
         challenge_data.extend_from_slice(&hash_output);
     }
 
@@ -149,7 +148,7 @@ pub fn is_rbo_low_degree(evaluations: &Vec<CirclePoint>, domain: &Vec<CirclePoin
 
 //need to_bytes and from_bytes functions for CirclePoint
 
-pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<&[u8]>{
+pub fn chunkify(values: &Vec<CirclePoint>) -> Vec<Vec<u8>>{
     let mut v = Vec::new();
     for i in 0..values.len(){
         let element = values[i..i + (FOLD_SIZE_RATIO as usize)]
@@ -170,7 +169,7 @@ pub struct Proof {
     // trees : Vec<Vec<Option<Vec<u8>>>>
     roots: Vec<Vec<u8>>,
     branches: Vec<Vec<Vec<Vec<u8>>>>,
-    leaf_values: VecVec<Vec<CirclePoint>>>,
+    leaf_values: Vec<Vec<Vec<CirclePoint>>>,
     final_values: Vec<CirclePoint>
 }
 
@@ -260,6 +259,32 @@ pub fn verify_low_degree(proof: Proof) -> bool{
         }
         let flattened_values = leaf_values[i].iter().flat_map(|v| v.iter().cloned()).collect();
         let (folded_values, _) = fold(flattened_values, fold_factor, domain);
+        let mut expected_values = Vec::new();
+        if i < roots.len()-1{
+            let mut expected_values_list = Vec::new();
+            for (j, &c) in challenges.iter().enumerate(){
+                let value = leaf_values[i+1][j][(c % FOLD_SIZE_RATIO) as usize];
+                expected_values_list.push(value);
+            }
+            expected_values = expected_values_list;
+        } else {
+            let mut expected_values_list = Vec::new();
+            for c in challenges{
+                expected_values_list.push(final_values[c as usize]);
+            }
+            expected_values = expected_values_list;
+        }
+        assert!(folded_values == expected_values);
+        for (j, &c) in challenges.iter().enumerate(){
+            assert!(verify_branch(roots[i], c as i32, chunkify(&leaf_values[i][j].to_vec())[0], branches[i][j]));
+        }
+        let mut challenges_new = Vec::new();
+        for c in challenges{
+            challenges_new.push(c >> FOLDS_PER_ROUND);
+        }
+        challenges = challenges_new;
     }
+    let final_domain = folded_reverse_bit_order(&halve_domain(&get_initial_domain_of_size(M, final_values.len()*2), true));
+    assert!(is_rbo_low_degree(&final_values, &final_domain));
     return true;
 }
