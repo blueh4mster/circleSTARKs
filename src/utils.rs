@@ -1,6 +1,10 @@
 use ndarray::{s, Array, Axis, Dimension};
 use std::any::Any;
 use crate::circle::{CirclePoint}
+use crate::merkle::{hash};
+
+const BASE : u64 = 2;
+pub const HALF : u64 = BASE.pow(30);
 
 pub fn is_tuple(value: &dyn Any) -> bool {
     value.is::<(CirclePoint, CirclePoint)>()
@@ -68,4 +72,28 @@ where
     output.slice_mut(s![1..;2]).assign(&reversed_odd);
 
     output
+}
+
+pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u32>{
+    let mut challenge_data = Vec::new();
+    for i in 0..((num_challenges + 7) / 8) {
+        let mut hash_input = Vec::new();
+        hash_input.extend_from_slice(root);
+        hash_input.push((i / 256) as u8);
+        hash_input.push((i % 256) as u8);
+        let hash_output = hash(hash_input);
+        challenge_data.extend_from_slice(&hash_output);
+    }
+
+    (0..num_challenges)
+        .map(|i| {
+            let start = i * 4;
+            let end = start + 4;
+            let value = u32::from_le_bytes(
+                challenge_data[start..end]
+                    .try_into()
+                    .expect("Invalid slice length"),
+            );
+            value % domain_size
+        }).collect()
 }

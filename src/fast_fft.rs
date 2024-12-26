@@ -8,7 +8,7 @@ use ndarray::{Array, ArrayView, Axis, Dimension};
 //list of evals to list of coeffs
 // here they are in a weird order
 // 1, y ,x , xy, 2x^2-1
-fn fft<D, T>(
+pub fn fft<D, T>(
     vals: &Array<T, D>,
     is_top_level: bool,
     rbos: &[usize],
@@ -68,7 +68,7 @@ where
     reordered / T::from(size).unwrap()
 }
 
-fn inv_fft<D, T>(vals: &Array<T, D>, sub_domains: &[CirclePoint], rbos: &[usize]) -> Array<T, D>
+pub fn inv_fft<D, T>(vals: &Array<T, D>, sub_domains: &[CirclePoint], rbos: &[usize]) -> Array<T, D>
 where
     D: Dimension,
     T: Clone,
