@@ -1,5 +1,3 @@
-use lambdaworks_math::field::fields::mersenne31;
-
 mod circle;
 mod fast_fft;
 mod fast_fri;
