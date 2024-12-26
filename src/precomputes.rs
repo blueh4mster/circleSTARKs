@@ -3,6 +3,7 @@ use crate::utils::log2;
 use crate::utils::{folded_reverse_bit_order, reverse_bit_order};
 use lambdaworks_math::field::element::FieldElement;
 use lambdaworks_math::field::fields::mersenne31::field::Mersenne31Field as M31;
+use ndarray::Array;
 
 const TOP_DOMAIN_SIZE: u32 = 1 << 24; // 2**24
 const LOG2_TOP_DOMAIN_SIZE: usize = 24;
@@ -39,7 +40,7 @@ pub fn get_subdomains() -> Vec<CirclePoint> {
     }
 
     //  only odd-indexed points
-    top_domain.into_iter().step_by(2).collect();
+    top_domain = top_domain.into_iter().step_by(2).collect();
 
     let mut sub_domains = CirclePoint::zeroes((TOP_DOMAIN_SIZE as usize) * 2);
 
@@ -84,18 +85,22 @@ pub fn compute_bit_orders() -> (Vec<u32>, Vec<u32>) {
     for i in 0..LOG2_TOP_DOMAIN_SIZE {
         let start = 1 << i;
         let end = 1 << (i + 1);
-
-        let rbo_slice = reverse_bit_order(start as u32, i + 1);
-        rbos[start..end].copy_from_slice(&rbo_slice);
+        let range: Vec<u32> = (0..2u32.pow(i as u32)).collect();
+        let ndarray_range: Array<u32,_> = Array::from(range);
+        let rbo_slice = reverse_bit_order(&ndarray_range);
+        let slice = rbo_slice.as_slice().unwrap();
+        rbos[start..end].copy_from_slice(&slice);
     }
 
     // Compute Folded RBO
     for i in 0..LOG2_TOP_DOMAIN_SIZE {
         let start = 1 << i;
         let end = 1 << (i + 1);
-
-        let folded_rbo_slice = folded_reverse_bit_order(start as u32, i + 1);
-        folded_rbos[start..end].copy_from_slice(&folded_rbo_slice);
+        let range: Vec<u32> = (0..2u32.pow(i as u32)).collect();
+        let ndarray_range: Array<u32,_> = Array::from(range);
+        let folded_rbo_slice = folded_reverse_bit_order(&ndarray_range);
+        let folded_slice = folded_rbo_slice.as_slice().unwrap();
+        folded_rbos[start..end].copy_from_slice(&folded_slice);
     }
 
     (rbos, folded_rbos)
