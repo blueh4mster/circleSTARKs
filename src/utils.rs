@@ -3,8 +3,8 @@ use std::any::Any;
 use crate::circle::{CirclePoint}
 use crate::merkle::{hash};
 
-const BASE : u64 = 2;
-pub const HALF : u64 = BASE.pow(30);
+const BASE : u32 = 2;
+pub const HALF : u32 = BASE.pow(30);
 
 pub fn is_tuple(value: &dyn Any) -> bool {
     value.is::<(CirclePoint, CirclePoint)>()
