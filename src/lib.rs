@@ -7,6 +7,7 @@ mod line_functions;
 mod merkle;
 mod precomputes;
 mod utils;
+mod poseidon;
 fn main() {
     println!("Hello, world!");
 }

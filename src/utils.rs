@@ -1,3 +1,7 @@
+use crate::circle::{CirclePoint, MODULUS};
+use lambdaworks_math::field::{
+    element::FieldElement, fields::mersenne31::field::Mersenne31Field as M31,
+};
 use ndarray::{s, Array, Axis, Dimension};
 use std::any::Any;
 use crate::circle::{CirclePoint}
@@ -12,6 +16,7 @@ pub fn is_tuple(value: &dyn Any) -> bool {
 pub fn log2(x: u32) -> usize {
     (x as f64).log2() as usize
 }
+
 pub fn reverse_bit_order<D>(vals: &Array<u32, D>) -> Array<u32, D>
 where
     D: Dimension,
@@ -56,6 +61,7 @@ where
 
 pub fn folded_reverse_bit_order<D>(vals: &Array<u32, D>) -> Array<u32, D>
 where
+    D:,
     D: Dimension,
 {
     // Create an output array of the same shape as input
@@ -72,6 +78,24 @@ where
     output.slice_mut(s![1..;2]).assign(&reversed_odd);
 
     output
+}
+
+pub fn mk_junk_data(len: u32) -> Vec<FieldElement<M31>> {
+    (len..2 * len)
+        .map(|a| {
+            let ans = 3u32.pow(a) ^ (7u32.pow(a));
+            FieldElement::new(ans)
+        })
+        .collect()
+}
+
+// Reshape a flat vector into a 2D vector with the specified dimensions
+pub fn reshape(
+    data: Vec<FieldElement<M31>>,
+    rows: usize,
+    cols: usize,
+) -> Vec<Vec<FieldElement<M31>>> {
+    data.chunks(cols).map(|chunk| chunk.to_vec()).collect()
 }
 
 pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> Vec<u32>{
