@@ -121,20 +121,22 @@ pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> V
             value % domain_size
         }).collect()
 }
-// def rbo_index_to_original(length, index, first_round=True):
-//     assert index.__class__ == cp.ndarray
-//     if length == 1:
-//         return cp.zeros_like(index)
-//     sub = rbo_index_to_original(length >> 1, index >> 1, False)
-//     if first_round:
-//         return (1 - (index % 2)) * sub*2 + (index % 2) * (length - 1 - sub*2)
-//     else:
-//         return (1 - (index % 2)) * sub + (index % 2) * (length//2 + sub)
+
 
 pub fn rbo_index_to_original<D>(length: usize, index: &Array<usize,D>, first_round: bool) ->  Array<usize,D> where D: Dimension {
     if length == 1{
         return Array::zeros(index.raw_dim());
     }
-    // will impl later
-    return Array::zeros(index.raw_dim());
+    let shifted = index>>1;
+    let sub = rbo_index_to_original(length>>1, &shifted, false);
+
+    if first_round{
+        let sub_clone = sub.clone();
+        let res = (1 - (index % 2)) * sub*2 + (index % 2) * (length - 1 - sub_clone*2);
+        return res;
+    } else {
+        let sub_clone = sub.clone();
+        let res = (1 - (index % 2)) * sub + (index % 2) * (length/2 + sub_clone);
+        return res;
+    }
 }
