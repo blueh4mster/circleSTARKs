@@ -2,7 +2,7 @@ use crate::circle::{CirclePoint, MODULUS};
 use lambdaworks_math::field::{
     element::FieldElement, fields::mersenne31::field::Mersenne31Field as M31,
 };
-use ndarray::{s, Array, Axis, Dimension};
+use ndarray::{s, Array, ArrayBase, Axis, Dim, Dimension, IxDynImpl};
 use std::any::Any;
 use crate::circle::{CirclePoint}
 use crate::merkle::{hash};
@@ -120,4 +120,21 @@ pub fn get_challenges(root: &[u8], domain_size: u32, num_challenges: usize) -> V
             );
             value % domain_size
         }).collect()
+}
+// def rbo_index_to_original(length, index, first_round=True):
+//     assert index.__class__ == cp.ndarray
+//     if length == 1:
+//         return cp.zeros_like(index)
+//     sub = rbo_index_to_original(length >> 1, index >> 1, False)
+//     if first_round:
+//         return (1 - (index % 2)) * sub*2 + (index % 2) * (length - 1 - sub*2)
+//     else:
+//         return (1 - (index % 2)) * sub + (index % 2) * (length//2 + sub)
+
+pub fn rbo_index_to_original<D>(length: usize, index: &Array<usize,D>, first_round: bool) ->  Array<usize,D> where D: Dimension {
+    if length == 1{
+        return Array::zeros(index.raw_dim());
+    }
+    // will impl later
+    return Array::zeros(index.raw_dim());
 }
