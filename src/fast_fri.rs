@@ -1,4 +1,6 @@
-use ndarray::{s, Array, ArrayView, Dimension};
+use std::collections::HashMap;
+
+use ndarray::{s, Array, ArrayView, ArrayBase, OwnedRepr, Dimension};
 
 use crate::{precomputes::{compute_bit_orders, get_subdomains, inverse_x, inverse_y}, utils::HALF};
 
@@ -8,7 +10,8 @@ const BASE : u32 = 2;
 const FOLD_SIZE_RATIO : u32= BASE.pow(FOLDS_PER_ROUND);
 const NUM_CHALLENGES : u32 = 80;
 
-pub fn fold<D>(values : &Array<u32, D>, coeff: u32, first_round: bool) where D : Dimension, {
+pub fn fold<D>(mut values : &Array<u32, D>, coeff: u32, first_round: bool) -> &ArrayBase<OwnedRepr<u32>, D>
+where D : Dimension {
 
     let (rbos, folded_rbos) = compute_bit_orders();
     let sub_domains = get_subdomains();
@@ -34,5 +37,21 @@ pub fn fold<D>(values : &Array<u32, D>, coeff: u32, first_round: bool) where D :
         } else {
             ArrayView::from(folded_rbos_slice.iter().map(|&idx| invx[idx]).collect())
         };
+        let left_ndim = left.ndim();
+        let twiddle_shape: Vec<usize> = std::iter::once(half_len) 
+        .chain(std::iter::repeat(1).take(left_ndim - 1)) 
+        .collect();
+        let twiddle_box = twiddle.to_owned().into_shape_clone(twiddle_shape).unwrap();
+        let mut f1;
+        for k in 0..half_len{
+            let value = (left[k] - right[k])*HALF*twiddle_box[k];
+        }
+        let mut new_values;
+        for l in 0..f0.len(){
+            new_values.push(f0[l] + f1[l]*coeff);
+        }
+        values = new_values;
     }
+    values
 }
+
