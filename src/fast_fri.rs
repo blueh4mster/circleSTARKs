@@ -1,6 +1,6 @@
 use ndarray::{s, Array, ArrayView, ArrayBase, OwnedRepr, Dimension};
 
-use crate::{utils::rbo_index_to_original, precomputes::{compute_bit_orders, get_subdomains, inverse_x, inverse_y}, utils::HALF};
+use crate::{precomputes::{compute_bit_orders, get_subdomains, inverse_x, inverse_y}, utils::{log2, rbo_index_to_original, HALF}};
 
 const BASE_CASE_SIZE : u32= 64;
 const FOLDS_PER_ROUND : u32 = 3;
@@ -101,3 +101,58 @@ where D : Dimension {
     values
 }
 
+pub fn prove_low_degree<D>(evaluations: &Array<usize, D>, extra_entropy: &Vec<u8>) where D:Dimension{
+    //commit merkle root 
+    let (rbos, folded_rbos) = compute_bit_orders();
+    let indices = &folded_rbos[evaluations.len()..evaluations.len()*2];
+    let values = ArrayView::from(indices.iter().map(|&x| evaluations.get(x)).collect());
+    let leaves;
+    let roots;
+    let trees;
+    //prove descent
+    let rounds = (log2(evaluations.len() as u32) / BASE_CASE_SIZE as usize) / FOLDS_PER_ROUND as usize;
+    for i in 0..rounds{
+        
+    }
+
+}
+
+//     for i in range(rounds):
+//         leaves.append(values)
+//         trees.append(merkelize_top_dimension(values.reshape(
+//             (len(values) // FOLD_SIZE_RATIO, FOLD_SIZE_RATIO)
+//             + values.shape[1:]
+//         )))
+//         roots.append(trees[-1][1])
+//         
+//         fold_factor = ExtendedM31(get_challenges(b''.join(roots), modulus, 4))
+//         values = fold(values, fold_factor, i==0)
+//     entropy = extra_entropy + b''.join(roots) + values.tobytes()
+//     challenges = get_challenges(
+//         entropy, len(evaluations) >> FOLDS_PER_ROUND, NUM_CHALLENGES
+//     )
+//     round_challenges = (
+//         challenges.reshape((1,)+challenges.shape)
+//         >> cp.arange(0, rounds * FOLDS_PER_ROUND, FOLDS_PER_ROUND)
+//         .reshape((rounds,) + (1,) * challenges.ndim)
+//     )
+
+//     branches = [
+//         [get_branch(tree, c) for c in r_challenges]
+//         for i, (r_challenges, tree) in enumerate(zip(round_challenges, trees))
+//     ]
+//     round_challenges_xfold = (
+//         round_challenges.reshape(round_challenges.shape + (1,)) * 8
+//         + cp.arange(FOLD_SIZE_RATIO).reshape(1, 1, FOLD_SIZE_RATIO)
+//     )
+
+//     leaf_values = [
+//         leaves[i][round_challenges_xfold[i]]
+//         for i in range(rounds)
+//     ]
+//     return {
+//         "roots": roots,
+//         "branches": branches,
+//         "leaf_values": leaf_values,
+//         "final_values": values
+//     }
